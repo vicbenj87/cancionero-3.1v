@@ -1,0 +1,22 @@
+# Dependencias
+node_modules
+/.pnp
+.pnp.js
+
+# Archivos de entorno (¡IMPORTANTE! Aquí guardas las contraseñas)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de construcción de Next.js
+/.next
+/out
+
+# Archivos de caché de Drizzle (opcional, pero mejor ocultarlos)
+drizzle/migrations/meta
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
