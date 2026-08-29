@@ -1,0 +1,797 @@
+/* ============================================================================
+   app.css · Cancionero digital
+   ----------------------------------------------------------------------------
+   Tres pantallas con oficios distintos:
+
+   1. EL ÍNDICE   — se usa con luz, de cerca, con el dedo o el ratón.
+                    Papel de himnario en penumbra: azul noche, latón y hueso.
+   2. EL VISOR    — se proyecta, se ve a diez metros, a oscuras.
+                    El fondo es el protagonista y la interfaz desaparece sola.
+   3. LA LETRA    — se lee, no se proyecta. Vertical, con scroll y sin flechas.
+
+   El elemento distintivo del índice es el "medidor de diapositivas": una tira
+   de 22 marcas por canción que dice de un vistazo cuántas estrofas tiene.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- Tokens -- */
+:root {
+  /* Color */
+  --noche:        #0b1020;
+  --noche-2:      #121a2e;
+  --noche-3:      #1c2742;
+  --hueso:        #f2ede1;
+  --hueso-tenue:  rgba(242, 237, 225, .58);
+  --laton:        #c9a44c;
+  --laton-claro:  #e8d29a;
+  --menta:        #7cb9a4;   /* Tipo 2 · Santa Cena */
+
+  /* Tipografía: una serif de himnario para los títulos, una sans neutra para
+     la interfaz, y la misma sans en peso fuerte para proyectar. */
+  --display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --interfaz: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --proyeccion: "Segoe UI", Inter, -apple-system, "Helvetica Neue", Arial, sans-serif;
+
+  /* Ritmo */
+  --u: 8px;
+  --radio: 10px;
+  --borde: 1px solid rgba(242, 237, 225, .10);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--noche);
+  color: var(--hueso);
+  font-family: var(--interfaz);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Mientras se proyecta o se lee la letra, la página de debajo no se mueve. */
+body.sin-scroll { overflow: hidden; }
+
+:focus-visible {
+  outline: 2px solid var(--laton-claro);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.sr-solo {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+
+/* ==========================================================================
+   1 · ÍNDICE
+   ========================================================================== */
+
+.indice {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: calc(var(--u) * 4) calc(var(--u) * 3) calc(var(--u) * 12);
+}
+
+/* --- Cabecera ----------------------------------------------------------- */
+.portada {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: calc(var(--u) * 2);
+  padding-bottom: calc(var(--u) * 3);
+  border-bottom: 1px solid rgba(201, 164, 76, .35);
+}
+
+.portada__marca {
+  font-size: .72rem;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--laton);
+  margin: 0 0 var(--u);
+}
+
+.portada__titulo {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2.1rem, 5.5vw, 3.4rem);
+  line-height: 1.05;
+  margin: 0;
+  letter-spacing: -.01em;
+}
+
+.portada__cifra {
+  font-family: var(--display);
+  font-size: .95rem;
+  color: var(--hueso-tenue);
+  text-align: right;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.portada__cifra strong { color: var(--laton-claro); font-weight: 400; }
+
+/* --- Buscador y filtros ------------------------------------------------- */
+.controles-indice {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--u);
+  align-items: center;
+  padding: calc(var(--u) * 2) 0;
+  margin-bottom: var(--u);
+  background: linear-gradient(180deg, var(--noche) 72%, rgba(11, 16, 32, 0));
+}
+
+.buscador { position: relative; flex: 1 1 260px; }
+
+.buscador__campo {
+  width: 100%;
+  padding: calc(var(--u) * 1.5) calc(var(--u) * 2) calc(var(--u) * 1.5) calc(var(--u) * 5);
+  font: inherit;
+  font-size: 1rem;
+  color: var(--hueso);
+  background: var(--noche-2);
+  border: var(--borde);
+  border-radius: var(--radio);
+}
+.buscador__campo::placeholder { color: rgba(242, 237, 225, .38); }
+.buscador__campo:focus { border-color: rgba(201, 164, 76, .6); background: var(--noche-3); }
+
+.buscador__icono {
+  position: absolute;
+  left: calc(var(--u) * 2);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px; height: 18px;
+  stroke: var(--laton);
+  fill: none;
+  stroke-width: 1.8;
+  pointer-events: none;
+}
+
+.filtros { display: flex; gap: calc(var(--u) * .75); flex-wrap: wrap; }
+
+.filtro {
+  font: inherit;
+  font-size: .85rem;
+  color: var(--hueso-tenue);
+  background: transparent;
+  border: var(--borde);
+  border-radius: 999px;
+  padding: var(--u) calc(var(--u) * 2);
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.filtro:hover { color: var(--hueso); border-color: rgba(242, 237, 225, .3); }
+.filtro[aria-pressed="true"] {
+  color: var(--noche);
+  background: var(--laton-claro);
+  border-color: var(--laton-claro);
+  font-weight: 600;
+}
+
+/* --- Sesiones compartidas y acceso rápido semanal ----------------------- */
+.menu-sesiones { position: relative; margin-left: auto; }
+
+.menu-sesiones__boton {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * .75);
+  font: inherit;
+  font-size: .85rem;
+  color: var(--hueso);
+  background: var(--noche-2);
+  border: var(--borde);
+  border-radius: 999px;
+  padding: var(--u) calc(var(--u) * 1.75);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.menu-sesiones__boton:hover { border-color: rgba(201, 164, 76, .5); background: var(--noche-3); }
+.menu-sesiones__boton svg { width: 16px; height: 16px; stroke: var(--laton); fill: none; stroke-width: 1.8; }
+.menu-sesiones__boton .menu-sesiones__flecha { width: 12px; height: 12px; transition: transform .15s; }
+.menu-sesiones__boton[aria-expanded="true"] .menu-sesiones__flecha { transform: rotate(180deg); }
+.menu-sesiones__boton[data-activo="director"] { border-color: var(--laton-claro); }
+.menu-sesiones__boton[data-activo="oyente"] { border-color: var(--menta); }
+
+.panel-sesiones {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(360px, 90vw);
+  max-height: min(70vh, 640px);
+  overflow-y: auto;
+  background: var(--noche-2);
+  border: var(--borde);
+  border-radius: var(--radio);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, .45);
+  padding: calc(var(--u) * 2);
+  z-index: 20;
+}
+.panel-sesiones[hidden] { display: none; }
+
+.panel-sesiones__estado {
+  font-size: .82rem;
+  color: var(--hueso-tenue);
+  background: var(--noche-3);
+  border: var(--borde);
+  border-radius: var(--radio);
+  padding: calc(var(--u) * 1.25) calc(var(--u) * 1.5);
+  margin-bottom: calc(var(--u) * 1.5);
+}
+.panel-sesiones__estado[data-rol="director"] { color: var(--laton-claro); border-color: rgba(201, 164, 76, .4); }
+.panel-sesiones__estado[data-rol="oyente"] { color: var(--menta); border-color: rgba(124, 185, 164, .4); }
+
+.panel-sesiones__seccion { margin-bottom: calc(var(--u) * 2); }
+.panel-sesiones__seccion h3 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: .95rem;
+  color: var(--laton-claro);
+  margin: 0 0 var(--u);
+}
+
+.form-sesion { display: flex; flex-direction: column; gap: calc(var(--u) * .75); }
+.form-sesion input {
+  font: inherit;
+  font-size: .88rem;
+  color: var(--hueso);
+  background: var(--noche);
+  border: var(--borde);
+  border-radius: var(--radio);
+  padding: var(--u) calc(var(--u) * 1.5);
+}
+.form-sesion input:focus { border-color: rgba(201, 164, 76, .6); }
+.form-sesion button {
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--noche);
+  background: var(--laton-claro);
+  border: none;
+  border-radius: var(--radio);
+  padding: var(--u) calc(var(--u) * 1.5);
+  cursor: pointer;
+  transition: filter .15s;
+}
+.form-sesion button:hover { filter: brightness(1.08); }
+.form-sesion button:disabled { opacity: .55; cursor: wait; }
+
+.lista-sesiones, .lista-rapida { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: calc(var(--u) * .5); }
+.lista-sesiones__vacio, .lista-rapida__vacio { font-size: .82rem; color: var(--hueso-tenue); padding: var(--u) 0; }
+
+.fila-mi-sesion, .fila-rapida {
+  display: flex;
+  align-items: center;
+  gap: var(--u);
+  background: var(--noche-3);
+  border: var(--borde);
+  border-radius: var(--radio);
+  padding: var(--u) calc(var(--u) * 1.25);
+}
+.fila-mi-sesion__nombre, .fila-rapida__titulo {
+  flex: 1;
+  font-size: .88rem;
+  color: var(--hueso);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fila-mi-sesion button, .fila-rapida button {
+  font: inherit;
+  font-size: .78rem;
+  color: var(--hueso);
+  background: transparent;
+  border: var(--borde);
+  border-radius: 999px;
+  padding: calc(var(--u) * .4) var(--u);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.fila-mi-sesion button:hover, .fila-rapida button:hover { border-color: rgba(201, 164, 76, .5); color: var(--laton-claro); }
+.fila-rapida__numero {
+  font-variant-numeric: tabular-nums;
+  color: var(--laton);
+  font-size: .78rem;
+  width: 1.6em;
+}
+
+.panel-sesiones__mensaje {
+  font-size: .8rem;
+  margin: calc(var(--u) * 1.5) 0 0;
+  padding: var(--u) calc(var(--u) * 1.25);
+  border-radius: var(--radio);
+  background: rgba(201, 164, 76, .12);
+  color: var(--laton-claro);
+}
+.panel-sesiones__mensaje[data-tipo="error"] { background: rgba(200, 80, 80, .14); color: #e8a3a3; }
+
+/* --- Lista de canciones ------------------------------------------------- */
+.lista { list-style: none; margin: 0; padding: 0; }
+
+/* Marca de letra del orden alfabético. Sin ella, 349 títulos ordenados son
+   un muro; con ella se navega igual que por el canto de un libro. */
+.marca-letra {
+  font-family: var(--display);
+  font-size: .8rem;
+  letter-spacing: .26em;
+  color: var(--laton);
+  padding: calc(var(--u) * 3.5) var(--u) calc(var(--u) * .75);
+  border-bottom: 1px solid rgba(201, 164, 76, .28);
+}
+.marca-letra:first-child { padding-top: var(--u); }
+
+/* La fila lleva la línea de separación y contiene dos botones hermanos: abrir
+   las diapositivas (casi toda la fila) y leer la letra (el margen derecho).
+   Anidar un botón dentro de otro no es HTML válido, de ahí la división. */
+.fila-cancion {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid rgba(242, 237, 225, .07);
+}
+
+.cancion {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 3.2rem 1fr auto auto;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 1.75) var(--u);
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s;
+}
+.cancion:hover, .cancion:focus-visible { background: rgba(242, 237, 225, .045); }
+.cancion:hover .cancion__titulo { color: var(--laton-claro); }
+
+/* Leer la letra sin proyectar. Discreto de serie: la acción principal de la
+   fila es abrir las diapositivas, y este botón no debe competir con ella. */
+.ver-letra {
+  flex: 0 0 auto;
+  width: 48px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  border-left: 1px solid rgba(242, 237, 225, .07);
+  color: var(--hueso-tenue);
+  opacity: .45;
+  cursor: pointer;
+  transition: opacity .15s, color .15s, background .15s;
+}
+.ver-letra svg {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.fila-cancion:hover .ver-letra { opacity: .75; }
+.ver-letra:hover, .ver-letra:focus-visible {
+  opacity: 1;
+  color: var(--laton-claro);
+  background: rgba(242, 237, 225, .045);
+}
+
+.cancion__numero {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  color: var(--laton);
+  font-variant-numeric: tabular-nums;
+  opacity: .85;
+}
+
+.cancion__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cancion__titulo {
+  font-family: var(--display);
+  font-size: clamp(1.05rem, 2.2vw, 1.28rem);
+  line-height: 1.25;
+  transition: color .15s;
+}
+
+/* Línea de la letra donde ha caído la búsqueda. Sin esto, un resultado cuyo
+   título no tiene nada que ver parece un fallo del buscador. */
+.coincidencia {
+  font-size: .82rem;
+  line-height: 1.4;
+  color: var(--hueso-tenue);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.coincidencia mark {
+  background: rgba(201, 164, 76, .26);
+  color: var(--laton-claro);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+/* SIGNATURE · medidor de diapositivas.
+   Va en un solo elemento y no en 22: con 349 filas, la versión con un nodo por
+   marca añadía más de 7.000 nodos al índice. Dos degradados repetidos hacen el
+   mismo dibujo — el de arriba, alto y dorado, recortado al ancho «llenado»;
+   el de abajo, bajo y tenue, a lo largo de toda la tira. */
+.medidor {
+  --marcas: 22;
+  --paso: 5px;
+  --llenado: 0px;
+  display: block;
+  width: calc(var(--marcas) * var(--paso) - 2px);
+  height: 16px;
+  background:
+    repeating-linear-gradient(90deg, var(--laton) 0 3px, transparent 3px var(--paso))
+      left top / var(--llenado) 100% no-repeat,
+    repeating-linear-gradient(90deg, rgba(242, 237, 225, .16) 0 3px, transparent 3px var(--paso))
+      left bottom / 100% 6px no-repeat;
+}
+
+.etiqueta-tipo {
+  font-size: .68rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 3px calc(var(--u) * 1.25);
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+.etiqueta-tipo--1 { color: var(--laton); }
+.etiqueta-tipo--2 { color: var(--menta); }
+.etiqueta-tipo--3 { color: rgba(242, 237, 225, .55); }
+
+/* --- Estado vacío ------------------------------------------------------- */
+.vacio {
+  padding: calc(var(--u) * 8) var(--u);
+  text-align: center;
+  color: var(--hueso-tenue);
+}
+.vacio__titulo {
+  font-family: var(--display);
+  font-size: 1.4rem;
+  color: var(--hueso);
+  margin: 0 0 var(--u);
+}
+.vacio p { margin: 0; line-height: 1.6; }
+.vacio code {
+  background: var(--noche-2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--laton-claro);
+}
+
+.pie {
+  margin-top: calc(var(--u) * 6);
+  padding-top: calc(var(--u) * 3);
+  border-top: 1px solid rgba(242, 237, 225, .07);
+  font-size: .82rem;
+  color: rgba(242, 237, 225, .38);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--u);
+  flex-wrap: wrap;
+}
+.pie a { color: var(--laton); text-decoration: none; }
+.pie a:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .cancion { grid-template-columns: 2.4rem 1fr auto; }
+  .medidor { display: none; }          /* En móvil el título manda. */
+  .indice { padding-inline: calc(var(--u) * 2); }
+}
+
+/* ==========================================================================
+   2 · VISOR DE DIAPOSITIVAS
+   ========================================================================== */
+
+.visor {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  background: #000;
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+.visor[data-abierto="true"] { display: block; }
+
+/* Velo: garantiza contraste del texto sobre cualquiera de los 35 fondos. */
+.velo {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 50% 50%, rgba(0, 0, 0, .18), rgba(0, 0, 0, .58)),
+    linear-gradient(180deg, rgba(0, 0, 0, .42), rgba(0, 0, 0, .22) 40%, rgba(0, 0, 0, .5));
+  pointer-events: none;
+}
+
+/* Pantalla en negro (tecla B): tapa la letra y el fondo, pero no los controles
+   —si tapara también los botones, salir a oscuras sería adivinar. */
+.visor[data-negro="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: #000;
+}
+
+/* --- Diapositiva -------------------------------------------------------- */
+.escena {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 6vh 8vw;
+}
+
+.diapositiva {
+  width: 100%;
+  max-width: 1600px;
+  max-height: 100%;
+  text-align: center;
+  font-family: var(--proyeccion);
+  font-weight: 600;
+  line-height: 1.28;
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, .75), 0 1px 3px rgba(0, 0, 0, .9);
+  white-space: pre-wrap;
+  overflow: hidden;
+  transition: opacity .22s ease;
+}
+.visor[data-transicion="true"] .diapositiva { opacity: 0; }
+
+/* --- Controles (se atenúan solos) --------------------------------------- */
+.control {
+  position: absolute;
+  z-index: 3;
+  color: #fff;
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .28);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: opacity .35s ease, background .15s, transform .15s;
+}
+.control:hover { background: rgba(255, 255, 255, .24); }
+.control:active { transform: scale(.96); }
+
+.visor[data-inactivo="true"] .control,
+.visor[data-inactivo="true"] .barra { opacity: 0; pointer-events: none; }
+.visor[data-inactivo="true"] { cursor: none; }
+
+/* Flechas: blancas, semitransparentes, abajo en cada lateral. */
+.flecha {
+  bottom: 4vh;
+  width: clamp(56px, 7vw, 84px);
+  height: clamp(56px, 7vw, 84px);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.flecha--anterior { left: 3vw; }
+.flecha--siguiente { right: 3vw; }
+.flecha svg {
+  width: 42%;
+  height: 42%;
+  stroke: #fff;
+  stroke-width: 2.2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.flecha[disabled] { opacity: .22 !important; cursor: default; }
+
+/* Guía de arranque: al empezar a proyectar, las flechas laten tres veces para
+   decir dónde se pulsa. Después se ocultan como el resto de los controles.
+   Enseñar el gesto sale más barato que escribir una instrucción en pantalla. */
+@keyframes guiaFlecha {
+  0%, 100% { opacity: .3;  transform: scale(1);    box-shadow: 0 0 0 0 rgba(255, 255, 255, .5); }
+  45%      { opacity: 1;   transform: scale(1.12); box-shadow: 0 0 0 18px rgba(255, 255, 255, 0); }
+}
+.visor[data-guia="true"] .flecha:not([disabled]) {
+  animation: guiaFlecha 800ms ease-in-out 3;
+}
+
+/* Barra superior: título, contador y acciones. */
+.barra {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--u);
+  padding: calc(var(--u) * 1.5) calc(var(--u) * 2);
+  background: linear-gradient(180deg, rgba(0, 0, 0, .5), transparent);
+  transition: opacity .35s ease;
+}
+
+.barra__titulo {
+  font-family: var(--display);
+  font-size: 1rem;
+  color: rgba(255, 255, 255, .82);
+  margin-right: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contador {
+  font-variant-numeric: tabular-nums;
+  font-size: .9rem;
+  color: rgba(255, 255, 255, .78);
+  padding: 0 calc(var(--u) * 1.5);
+}
+
+.boton-barra {
+  position: static;
+  border-radius: 999px;
+  padding: calc(var(--u) * .9) calc(var(--u) * 1.8);
+  font: inherit;
+  font-size: .82rem;
+  letter-spacing: .04em;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * .75);
+}
+.boton-barra svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.9; }
+
+/* --- Fondos de imagen y vídeo ------------------------------------------- */
+.medio-fondo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+.medio-fondo[data-activo="true"] { display: block; }
+
+/* --- Aviso de orientación ----------------------------------------------- */
+.aviso-giro {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: none;
+  place-items: center;
+  text-align: center;
+  padding: calc(var(--u) * 4);
+  background: rgba(4, 6, 12, .94);
+  color: var(--hueso);
+}
+.aviso-giro p { font-family: var(--display); font-size: 1.3rem; line-height: 1.5; max-width: 22ch; }
+
+@media (orientation: portrait) and (max-width: 900px) {
+  .visor[data-abierto="true"] .aviso-giro { display: grid; }
+}
+
+/* ==========================================================================
+   3 · PANTALLA DE LETRA COMPLETA
+   --------------------------------------------------------------------------
+   No es una diapositiva ni una capa encima del visor: es su propia pantalla.
+   Se sale de pantalla completa al abrirla, no hay flechas y se recorre con
+   scroll normal — rueda, dedo, barra espaciadora o AvPág.
+   ========================================================================== */
+
+.pantalla-letra {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: var(--noche);
+}
+.pantalla-letra[data-abierto="true"] { display: block; }
+/* Recibe el foco al abrirse para que las teclas de scroll respondan ya; el
+   anillo lo lleva el botón de volver, que es lo que se maneja de verdad. */
+.pantalla-letra:focus { outline: none; }
+
+.letra-barra {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 1.75) calc(var(--u) * 3);
+  background: linear-gradient(180deg, var(--noche) 76%, rgba(11, 16, 32, 0));
+}
+
+.boton-volver {
+  font: inherit;
+  font-size: .88rem;
+  color: var(--hueso);
+  background: var(--noche-3);
+  border: var(--borde);
+  border-radius: 999px;
+  padding: calc(var(--u) * 1.1) calc(var(--u) * 2.25);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s;
+}
+.boton-volver:hover { background: #24304f; border-color: rgba(242, 237, 225, .26); }
+
+.letra-ficha {
+  flex: 1;                                 /* empuja «Proyectar» al otro extremo */
+  font-size: .78rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--hueso-tenue);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Salir de la lectura a la proyección: es la acción de destino de esta
+   pantalla, así que se marca en latón y todo lo demás se queda en gris. */
+.boton-proyectar {
+  background: var(--laton-claro);
+  border-color: var(--laton-claro);
+  color: #14100a;
+  font-weight: 600;
+  margin-left: auto;
+}
+.boton-proyectar:hover { background: #f2e0b4; border-color: #f2e0b4; }
+
+.letra-interior {
+  max-width: 60ch;
+  margin: 0 auto;
+  padding: calc(var(--u) * 4) calc(var(--u) * 3) 22vh;
+}
+
+.letra-titulo {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(1.7rem, 4.5vw, 2.6rem);
+  line-height: 1.15;
+  color: var(--laton-claro);
+  margin: 0 0 calc(var(--u) * 5);
+}
+
+.estrofa {
+  font-size: clamp(1.05rem, 2.2vw, 1.32rem);
+  line-height: 1.6;
+  color: var(--hueso);
+  white-space: pre-wrap;
+  margin: 0 0 calc(var(--u) * 4.5);
+  padding-left: calc(var(--u) * 3);
+  border-left: 2px solid rgba(201, 164, 76, .4);
+}
+.estrofa__numero {
+  display: block;
+  font-family: var(--display);
+  font-size: .78rem;
+  letter-spacing: .2em;
+  color: var(--laton);
+  margin-bottom: calc(var(--u) * .75);
+}
+
+@media (max-width: 640px) {
+  .letra-barra { padding-inline: calc(var(--u) * 2); }
+  .letra-interior { padding-inline: calc(var(--u) * 2.5); }
+  .letra-ficha { display: none; }
+}
+
+/* ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}

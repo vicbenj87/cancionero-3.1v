@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cancionero · IBM El Vivero</title>
+<meta name="description" content="Cancionero digital con vista de diapositivas para proyectar en el culto.">
+<meta name="theme-color" content="#0b1020">
+
+<link rel="stylesheet" href="css/backgrounds.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- ==========================================================================
+     1 · ÍNDICE  (ordenado por título, agrupado por letra)
+     ========================================================================== -->
+<main class="indice">
+
+  <header class="portada">
+    <div>
+      <p class="portada__marca">IBM El Vivero</p>
+      <h1 class="portada__titulo">Cancionero</h1>
+    </div>
+    <p class="portada__cifra">
+      <strong id="cifra-total">0</strong> canciones<br>
+      <span id="cifra-fondos">35</span> fondos animados
+    </p>
+  </header>
+
+  <div class="controles-indice">
+    <div class="buscador">
+      <svg class="buscador__icono" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+      </svg>
+      <label class="sr-solo" for="busqueda">Buscar en títulos y letras</label>
+      <input class="buscador__campo" id="busqueda" type="search"
+             placeholder="Buscar en títulos y letras…" autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="filtros" id="filtros" role="group" aria-label="Filtrar por culto">
+      <button class="filtro" type="button" data-filtro="0" aria-pressed="true">Todas</button>
+      <button class="filtro" type="button" data-filtro="1" aria-pressed="false">Dominical</button>
+      <button class="filtro" type="button" data-filtro="2" aria-pressed="false">Santa Cena</button>
+    </div>
+
+    <!-- ========================================================================
+         Sesiones compartidas (director / oyentes) + acceso rápido semanal
+         ==================================================================== -->
+    <div class="menu-sesiones" id="menu-sesiones">
+      <button class="menu-sesiones__boton" id="btn-sesiones" type="button" aria-haspopup="true" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="3"></circle>
+          <path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"></path>
+        </svg>
+        <span id="btn-sesiones-etiqueta">Sesiones</span>
+        <svg class="menu-sesiones__flecha" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+
+      <div class="panel-sesiones" id="panel-sesiones" hidden>
+
+        <div class="panel-sesiones__estado" id="sesion-estado">Sin sesión activa.</div>
+
+        <section class="panel-sesiones__seccion">
+          <h3>Crear sesión</h3>
+          <form id="form-crear-sesion" class="form-sesion" autocomplete="off">
+            <input type="text" id="crear-nombre" placeholder="Nombre de la sesión" maxlength="60" required>
+            <input type="password" id="crear-codigo" placeholder="Código secreto" maxlength="40" required>
+            <button type="submit">Crear y dirigir</button>
+          </form>
+        </section>
+
+        <section class="panel-sesiones__seccion">
+          <h3>Unirse a una sesión</h3>
+          <form id="form-unirse-sesion" class="form-sesion" autocomplete="off">
+            <input type="text" id="unirse-nombre" placeholder="Nombre de la sesión" maxlength="60" required>
+            <input type="password" id="unirse-codigo" placeholder="Código secreto" maxlength="40" required>
+            <button type="submit">Unirse</button>
+          </form>
+        </section>
+
+        <section class="panel-sesiones__seccion">
+          <h3>Tus sesiones (<span id="contador-sesiones">0</span>/4)</h3>
+          <ul class="lista-sesiones" id="lista-mis-sesiones">
+            <li class="lista-sesiones__vacio">Todavía no has creado ninguna.</li>
+          </ul>
+        </section>
+
+        <section class="panel-sesiones__seccion">
+          <h3>Acceso rápido de la semana</h3>
+          <ul class="lista-rapida" id="lista-rapida">
+            <li class="lista-rapida__vacio">Cargando…</li>
+          </ul>
+        </section>
+
+        <p class="panel-sesiones__mensaje" id="sesion-mensaje" hidden></p>
+      </div>
+    </div>
+  </div>
+
+  <ul class="lista" id="lista"></ul>
+
+  <div class="vacio" id="vacio" hidden>
+    <p class="vacio__titulo" id="vacio-titulo">Todavía no hay canciones</p>
+    <p id="vacio-texto"></p>
+  </div>
+
+  <footer class="pie">
+    <span>Flechas o barra espaciadora para pasar · L para la letra completa · B para pantalla en negro</span>
+    <a href="editor.html">Editar el repertorio</a>
+  </footer>
+</main>
+
+<!-- ==========================================================================
+     2 · VISOR DE DIAPOSITIVAS
+     Una sola diapositiva en el DOM; el texto se reemplaza al navegar.
+     ========================================================================== -->
+<section class="visor" id="visor" data-abierto="false" aria-hidden="true" aria-label="Proyección">
+
+  <!-- Capa 1: fondo animado en CSS (siempre presente). -->
+  <div class="capa-fondo" id="capa-fondo"></div>
+
+  <!-- Capa 2: imagen o vídeo, solo si carga a tiempo. -->
+  <img  class="medio-fondo" id="fondo-imagen" alt="" aria-hidden="true">
+  <video class="medio-fondo" id="fondo-video" muted loop playsinline preload="none" aria-hidden="true"></video>
+
+  <!-- Capa 3: velo que asegura el contraste del texto. -->
+  <div class="velo"></div>
+
+  <!-- Capa 4: la letra. -->
+  <div class="escena" id="escena">
+    <div class="diapositiva" id="diapositiva" aria-live="polite"></div>
+  </div>
+
+  <!-- Barra superior -->
+  <header class="barra" id="barra">
+    <span class="barra__titulo" id="visor-titulo"></span>
+    <span class="contador" id="contador" aria-label="Diapositiva actual"></span>
+
+    <button class="control boton-barra" id="btn-letra" type="button" title="Letra completa (L)">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <line x1="4" y1="7" x2="20" y2="7"></line>
+        <line x1="4" y1="12" x2="20" y2="12"></line>
+        <line x1="4" y1="17" x2="14" y2="17"></line>
+      </svg>
+      Letra completa
+    </button>
+
+    <button class="control boton-barra" id="btn-pantalla" type="button" title="Pantalla completa (F)">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <polyline points="4 9 4 4 9 4"></polyline>
+        <polyline points="15 4 20 4 20 9"></polyline>
+        <polyline points="20 15 20 20 15 20"></polyline>
+        <polyline points="9 20 4 20 4 15"></polyline>
+      </svg>
+      Pantalla
+    </button>
+
+    <button class="control boton-barra" id="btn-salir" type="button" title="Volver al índice (Esc)">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+      </svg>
+      Salir
+    </button>
+  </header>
+
+  <!-- Flechas blancas semitransparentes, abajo en cada lateral.
+       Al abrir la canción parpadean unos segundos y luego se ocultan. -->
+  <button class="control flecha flecha--anterior" id="btn-anterior" type="button" aria-label="Diapositiva anterior">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 4 7 12 15 20"></polyline></svg>
+  </button>
+
+  <button class="control flecha flecha--siguiente" id="btn-siguiente" type="button" aria-label="Diapositiva siguiente">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 4 17 12 9 20"></polyline></svg>
+  </button>
+
+  <div class="aviso-giro">
+    <p>Gira el dispositivo para proyectar en horizontal.</p>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     3 · PANTALLA DE LETRA COMPLETA
+     Pantalla propia, vertical y con scroll. No es una diapositiva: al abrirla
+     se sale de pantalla completa y no hay flechas de navegación.
+     ========================================================================== -->
+<section class="pantalla-letra" id="pantalla-letra" data-abierto="false"
+         aria-hidden="true" aria-label="Letra completa" tabindex="-1">
+
+  <header class="letra-barra">
+    <button class="boton-volver" id="volver-letra" type="button">← Volver</button>
+    <span class="letra-ficha" id="letra-ficha"></span>
+    <button class="boton-volver boton-proyectar" id="proyectar-letra" type="button"
+            title="Abrir esta canción en diapositivas">Proyectar</button>
+  </header>
+
+  <div class="letra-interior">
+    <h2 class="letra-titulo" id="letra-titulo"></h2>
+    <div id="letra-cuerpo"></div>
+  </div>
+</section>
+
+<!-- Orden obligatorio: configuración → datos → aplicación.
+     Si prefieres publicar solo js/data/canciones.json, borra la línea de los
+     datos: la app lo detecta y lo lee por su cuenta (ver datos.origen). -->
+<script src="js/config.js"></script>
+<script src="js/data/canciones.js"></script>
+<script src="js/app.js"></script>
+<script src="js/sesiones.js"></script>
+</body>
+</html>

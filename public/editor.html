@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor del repertorio · Cancionero</title>
+<link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+
+<!-- ==========================================================================
+     BARRA SUPERIOR
+     ========================================================================== -->
+<header class="cabecera">
+  <h1 class="cabecera__titulo">
+    <small>Cancionero</small>
+    Editor del repertorio
+  </h1>
+
+  <input class="campo" id="buscar" type="search" placeholder="Buscar y saltar (Intro)…"
+         style="width: 200px" autocomplete="off" aria-label="Buscar en títulos y letras">
+
+  <input class="campo" id="ir-fila" type="number" min="1" max="349" placeholder="Ir a la nº…"
+         style="width: 110px" aria-label="Ir a la canción número">
+
+  <span class="separador"></span>
+
+  <label class="interruptor" title="La columna TIPO llega del archivo de datos y se conserva tal cual.">
+    <input type="checkbox" id="editar-tipo"> Editar TIPO
+  </label>
+
+  <button class="boton" id="btn-web" type="button">Traer de la web</button>
+  <button class="boton" id="btn-importar" type="button">Importar canciones</button>
+  <button class="boton" id="btn-revisar" type="button">Revisar</button>
+  <button class="boton" id="btn-exportar-json" type="button">Exportar .json</button>
+  <button class="boton boton--principal" id="btn-exportar-js" type="button">Exportar canciones.js</button>
+</header>
+
+<div class="aviso" id="aviso-borrador">
+  <span id="aviso-borrador-texto"></span>
+  <span class="separador"></span>
+  <button class="boton boton--sutil boton--peligro" id="btn-vaciar-todo" type="button">Empezar de cero</button>
+</div>
+
+<div class="cabecera" style="padding: 8px 16px">
+  <span class="estado" id="estado"></span>
+  <span class="separador"></span>
+  <span class="estado" id="guardado">Borrador automático activo</span>
+</div>
+
+<!-- ==========================================================================
+     CUADRÍCULA · fila 1 = cabecera · filas 2–350 = las 349 canciones
+     Solo existen en el DOM las filas visibles.
+     ========================================================================== -->
+<div class="rejilla" id="rejilla" tabindex="0">
+  <div class="rejilla__cabecera" id="rejilla-cabecera" role="row"></div>
+  <div class="rejilla__cuerpo" id="rejilla-cuerpo"></div>
+</div>
+
+<!-- ==========================================================================
+     CAJÓN · edición cómoda de una canción
+     ========================================================================== -->
+<div class="fondo-cajon" id="fondo-cajon" data-visible="false"></div>
+
+<aside class="cajon" id="cajon" data-abierto="false" aria-label="Edición de la canción">
+  <div class="cajon__cabecera">
+    <h2 class="cajon__titulo" id="cajon-titulo"></h2>
+    <span class="separador"></span>
+    <button class="boton boton--sutil" id="cerrar-cajon" type="button">Cerrar</button>
+  </div>
+
+  <div class="cajon__cuerpo" id="cajon-cuerpo"></div>
+
+  <div class="cajon__pie">
+    <button class="boton boton--principal" id="btn-repartir" type="button">Pegar letra y repartirla</button>
+    <span class="separador"></span>
+    <button class="boton boton--sutil boton--peligro" id="btn-vaciar-fila" type="button">Vaciar esta canción</button>
+  </div>
+</aside>
+
+<!-- ==========================================================================
+     DIÁLOGO · importar
+     ========================================================================== -->
+<div class="dialogo" id="dlg-importar" role="dialog" aria-labelledby="titulo-importar">
+  <div class="dialogo__caja">
+    <h2 class="dialogo__titulo" id="titulo-importar">Importar canciones</h2>
+    <p class="dialogo__ayuda">
+      Carga el <code>canciones.js</code> que ya tengas publicado, o el <code>canciones.json</code>
+      exportado desde aquí. Cada canción vuelve a su número original; las que no quepan se descartan.
+      <strong>Sustituye todo el contenido actual de la tabla.</strong>
+    </p>
+
+    <p><input type="file" id="archivo" accept=".js,.json,.txt"></p>
+    <textarea id="texto-importado" placeholder="…o pega aquí el contenido del archivo"></textarea>
+
+    <div class="opciones">
+      <label><input type="radio" name="modo-import" value="reemplazar" checked>
+        Reemplazar toda la tabla</label>
+      <label><input type="radio" name="modo-import" value="anadir">
+        Añadir a lo que ya hay</label>
+      <label><input type="checkbox" id="marcar-ambas" checked>
+        Si el título ya existe con otro TIPO, marcarlo como <strong>3 · Ambas</strong></label>
+    </div>
+
+    <p class="dialogo__ayuda" style="margin: 0">
+      Para juntar los dos cancioneros: importa primero el Dominical reemplazando, y después
+      el de Santa Cena <strong>añadiendo</strong>. Lo que esté en las dos páginas queda como Ambas.
+    </p>
+
+    <p class="previsualizacion" data-error="true" id="error-importar"></p>
+
+    <div class="acciones-dialogo">
+      <button class="boton boton--sutil" type="button" data-cerrar="dlg-importar">Cancelar</button>
+      <button class="boton boton--principal" id="confirmar-importar" type="button">Importar y reemplazar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     DIÁLOGO · repartir letra
+     ========================================================================== -->
+<div class="dialogo" id="dlg-reparto" role="dialog" aria-labelledby="titulo-reparto">
+  <div class="dialogo__caja">
+    <h2 class="dialogo__titulo" id="titulo-reparto">Pegar letra y repartirla</h2>
+    <p class="dialogo__ayuda">
+      Copia la letra completa y pégala aquí. Se reparte entre las 22 diapositivas de la canción
+      abierta, y lo que ya hubiera en ellas se sustituye.
+    </p>
+
+    <textarea id="letra-pegada" placeholder="Pega aquí la letra completa…"></textarea>
+
+    <div class="opciones">
+      <label><input type="radio" name="modo" value="blanco" checked> Separar por línea en blanco</label>
+      <label><input type="radio" name="modo" value="lineas"> Cada
+        <input class="campo" id="lineas-por-bloque" type="number" min="1" max="12" value="4"
+               style="width: 62px" aria-label="Líneas por diapositiva"> líneas</label>
+      <label><input type="radio" name="modo" value="marca"> Separar por <code>---</code></label>
+      <label><input type="checkbox" id="unir-sobrante" checked> Unir el sobrante en la última</label>
+    </div>
+
+    <p class="previsualizacion" id="previsualizacion"></p>
+
+    <div class="acciones-dialogo">
+      <button class="boton boton--sutil" type="button" data-cerrar="dlg-reparto">Cancelar</button>
+      <button class="boton boton--principal" id="aplicar-reparto" type="button" disabled>Repartir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     DIÁLOGO · revisión
+     ========================================================================== -->
+<div class="dialogo" id="dlg-revision" role="dialog" aria-labelledby="titulo-revision">
+  <div class="dialogo__caja">
+    <h2 class="dialogo__titulo" id="titulo-revision">Revisión antes de publicar</h2>
+    <p class="dialogo__ayuda">
+      Nada de esto impide exportar: son avisos para que no se cuele una canción sin título
+      o una estrofa que se verá diminuta en la pantalla.
+    </p>
+    <ul class="informe" id="informe"></ul>
+    <div class="acciones-dialogo">
+      <button class="boton boton--principal" type="button" data-cerrar="dlg-revision">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     DIÁLOGO · traer del cancionero web
+     ========================================================================== -->
+<div class="dialogo" id="dlg-web" role="dialog" aria-labelledby="titulo-web">
+  <div class="dialogo__caja">
+    <h2 class="dialogo__titulo" id="titulo-web">Traer las letras del cancionero web</h2>
+    <p class="dialogo__ayuda">
+      Este código lee la página que tengas abierta y descarga un <code>.json</code> con todas
+      sus canciones ya repartidas en diapositivas. <strong>Se ejecuta en tu navegador, sobre
+      tu propia web</strong>: nada sale de tu ordenador.
+    </p>
+
+    <ol class="pasos">
+      <li>Abre la página del cancionero (la de <strong>Dominical</strong> o la de <strong>Santa Cena</strong>).</li>
+      <li>Pulsa <kbd>F12</kbd> y ve a la pestaña <strong>Console</strong>. Si pide confirmación
+          para pegar, escribe <code>allow pasting</code> y pulsa <kbd>Intro</kbd>.</li>
+      <li>Pega el código de abajo y pulsa <kbd>Intro</kbd>. Se descargará el archivo.</li>
+      <li>Vuelve aquí, pulsa <strong>Importar canciones</strong> y carga ese archivo.</li>
+    </ol>
+
+    <div class="opciones">
+      <label>TIPO de la página que vas a leer:
+        <select class="campo" id="tipo-extractor">
+          <option value="1" selected>1 · Dominical</option>
+          <option value="2">2 · Santa Cena</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="quitar-marcas" checked>
+        Quitar las marcas de repetición <code>//…//</code></label>
+    </div>
+
+    <pre class="codigo" id="codigo-listo"></pre>
+
+    <div class="acciones-dialogo">
+      <button class="boton boton--sutil" type="button" data-cerrar="dlg-web">Cerrar</button>
+      <button class="boton boton--principal" id="copiar-codigo" type="button">Copiar el código</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     EXTRACTOR
+     --------------------------------------------------------------------------
+     No es un script de esta página: es el texto que se copia y se pega en la
+     consola del navegador estando en el cancionero web. Vive aquí, en un
+     bloque de texto plano, para poder leerlo y corregirlo como código normal
+     en vez de como una cadena llena de escapes.
+
+     Las dos primeras líneas las reescribe editor.js según lo que elijas arriba.
+     ========================================================================== -->
+<script id="codigo-extractor" type="text/plain">
+(function extraerCancionero() {
+  'use strict';
+
+  var TIPO = 1;                  // 1 = Dominical · 2 = Santa Cena
+  var QUITAR_MARCAS = true;      // //estribillo// y /repetir/
+  var MAX_DIAPOS = 22;
+
+  /* Los títulos de Google Sites son encabezados con un ancla propia
+     (id="h.xxxxx"). Cada canción va desde su ancla hasta la siguiente. */
+  var anclas = Array.prototype.slice.call(document.querySelectorAll('[id^="h."]'));
+  if (!anclas.length) {
+    console.error('Aquí no hay ningún cancionero: abre la página de las canciones.');
+    return;
+  }
+
+  /* Texto de un trozo del documento respetando los saltos de línea de los
+     bloques. innerText haría lo mismo, pero depende de que el navegador haya
+     calculado el diseño y aquí trabajamos sobre fragmentos sueltos. */
+  var BLOQUES = /^(P|DIV|H1|H2|H3|H4|H5|H6|LI|TR|SECTION|ARTICLE|BLOCKQUOTE)$/;
+
+  function textoDe(raiz) {
+    var salida = '';
+    (function recorrer(nodo) {
+      if (nodo.nodeType === 3) { salida += nodo.nodeValue; return; }
+      /* 1 = elemento, 11 = fragmento. El fragmento es la raíz que devuelve
+         cloneContents(): si no se le deja pasar, no se recorre nada. */
+      if (nodo.nodeType !== 1 && nodo.nodeType !== 11) { return; }
+      var etiqueta = nodo.tagName || '';
+      if (etiqueta === 'SCRIPT' || etiqueta === 'STYLE') { return; }
+      if (etiqueta === 'BR') { salida += '\n'; return; }
+      var esBloque = BLOQUES.test(etiqueta);
+      if (esBloque && salida && salida.charAt(salida.length - 1) !== '\n') { salida += '\n'; }
+      for (var i = 0; i < nodo.childNodes.length; i++) { recorrer(nodo.childNodes[i]); }
+      if (esBloque) { salida += '\n'; }
+    })(raiz);
+    return salida;
+  }
+
+  function trozoEntre(desde, hasta) {
+    var rango = document.createRange();
+    rango.setStartAfter(desde);
+    if (hasta) { rango.setEndBefore(hasta); }
+    else { rango.setEnd(document.body, document.body.childNodes.length); }
+    return textoDe(rango.cloneContents());
+  }
+
+  function limpiar(texto) {
+    var t = String(texto).replace(/\r\n/g, '\n').replace(/\u00a0/g, ' ');
+    if (QUITAR_MARCAS) { t = t.replace(/\/{1,4}/g, ''); }
+
+    /* En la web hay canciones escritas de corrido, con dos o más espacios
+       donde debería haber un salto de línea. Si se aplastan como espacio
+       normal, la canción entera acaba en una sola diapositiva ilegible. */
+    t = t.replace(/[ \t]{2,}/g, '\n');
+
+    return t
+      .split('\n')
+      .map(function (linea) { return linea.trim(); })
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  /* Reparto en diapositivas.
+     Lo normal es que las estrofas vayan separadas por una línea en blanco. Lo
+     que manda para cortar no son los caracteres sino las líneas: proyectada a
+     diez metros, una diapositiva aguanta unas seis u ocho líneas y ni una más.
+     Los bloques que se pasan se subdividen en trozos parejos y la canción
+     queda marcada para repasar. */
+  var MAX_LINEAS = 8;
+  var LINEAS_IDEALES = 4;
+
+  function partirBloque(bloque) {
+    var lineas = bloque.split('\n').filter(function (l) { return l.trim(); });
+    if (lineas.length <= MAX_LINEAS) { return [bloque]; }
+
+    var trozos = Math.ceil(lineas.length / LINEAS_IDEALES);
+    var tamano = Math.ceil(lineas.length / trozos);     // reparto parejo, sin colas de una línea
+    var salida = [];
+    for (var i = 0; i < lineas.length; i += tamano) {
+      salida.push(lineas.slice(i, i + tamano).join('\n'));
+    }
+    return salida;
+  }
+
+  function repartir(texto) {
+    var brutos = texto.split(/\n\s*\n+/)
+      .map(function (b) { return b.trim(); })
+      .filter(function (b) { return b.length; });
+
+    var bloques = [], repasar = false;
+    brutos.forEach(function (b) {
+      var trozos = partirBloque(b);
+      if (trozos.length > 1) { repasar = true; }
+      bloques = bloques.concat(trozos);
+    });
+
+    if (bloques.length > MAX_DIAPOS) {
+      var cola = bloques.slice(MAX_DIAPOS - 1).join('\n\n');
+      bloques = bloques.slice(0, MAX_DIAPOS - 1);
+      bloques.push(cola);
+      repasar = true;
+    }
+    return { diapositivas: bloques, repasar: repasar };
+  }
+
+  var canciones = [], avisos = [], vistos = {};
+
+  anclas.forEach(function (ancla, i) {
+    var crudo = limpiar(trozoEntre(ancla, anclas[i + 1]));
+    if (!crudo) { return; }
+
+    var lineas = crudo.split('\n');
+    var titulo = (lineas.shift() || '').trim();
+    if (!titulo) { return; }
+
+    var resto = lineas.join('\n').replace(/^\n+/, '').trim();
+    if (!resto) { avisos.push(titulo + ': sin letra'); return; }
+
+    var reparto = repartir(resto);
+    if (reparto.repasar) { avisos.push(titulo + ': repasar el reparto de estrofas'); }
+
+    var clave = titulo.toLowerCase();
+    if (vistos[clave]) { avisos.push(titulo + ': el título está repetido en la página'); }
+    vistos[clave] = true;
+
+    canciones.push({
+      id: canciones.length + 1,
+      titulo: titulo,
+      tipo: TIPO,
+      diapositivas: reparto.diapositivas
+    });
+  });
+
+  var datos = { version: 1, generado: new Date().toISOString().slice(0, 10), canciones: canciones };
+  var nombre = 'canciones-tipo-' + TIPO + '.json';
+  var blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
+  var enlace = document.createElement('a');
+  enlace.href = URL.createObjectURL(blob);
+  enlace.download = nombre;
+  document.body.appendChild(enlace);
+  enlace.click();
+  document.body.removeChild(enlace);
+
+  console.log('%c' + canciones.length + ' canciones extraídas → ' + nombre,
+              'font-size:14px;font-weight:bold');
+  console.log('Diapositivas por canción:',
+    canciones.map(function (c) { return c.titulo + ' (' + c.diapositivas.length + ')'; }).join(' · '));
+  if (avisos.length) {
+    console.warn('Para revisar en el editor (' + avisos.length + '):');
+    avisos.forEach(function (a) { console.warn('  · ' + a); });
+  }
+})();
+</script>
+
+<script src="js/config.js"></script>
+<script src="js/editor.js"></script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+/* ============================================================================
+   backgrounds.css · 35 fondos animados en CSS puro
+   ----------------------------------------------------------------------------
+   Cómo funciona
+   -------------
+   El elemento <div class="capa-fondo"> recibe una clase "fondo--01" … "fondo--35"
+   cada vez que se abre una canción. Cada fondo usa como máximo tres planos: el
+   propio elemento, ::before y ::after.
+
+   Todas las animaciones son de `transform`, `opacity`, `filter` o
+   `background-position`: propiedades que compone la GPU. Ningún fondo provoca
+   reflow, así que puede estar proyectándose una hora sin calentar el portátil.
+
+   Añadir un fondo nuevo
+   ---------------------
+   1. Escribe aquí la regla `.fondo--36 { … }`.
+   2. Sube `fondos.totalCss` a 36 en js/config.js.
+   No hay que tocar nada más: la app numera los fondos con ceros a la izquierda.
+   ========================================================================== */
+
+/* --- Plano base ---------------------------------------------------------- */
+.capa-fondo {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #070a12;
+  /* Aísla el repintado del fondo del resto de la interfaz. */
+  contain: strict;
+}
+
+.capa-fondo::before,
+.capa-fondo::after {
+  content: "";
+  position: absolute;
+  /* Se desbordan a propósito: así ningún giro deja esquinas vacías. */
+  inset: -35%;
+  pointer-events: none;
+}
+
+/* Accesibilidad: quien pida menos movimiento ve el fondo quieto, no otro fondo. */
+@media (prefers-reduced-motion: reduce) {
+  .capa-fondo,
+  .capa-fondo::before,
+  .capa-fondo::after {
+    animation: none !important;
+  }
+}
+
+/* --- Animaciones compartidas -------------------------------------------- */
+@keyframes fdPan      { 0%, 100% { background-position: 0% 50%; }  50% { background-position: 100% 50%; } }
+@keyframes fdPanV     { 0%, 100% { background-position: 50% 0%; }  50% { background-position: 50% 100%; } }
+@keyframes fdGiro     { to { transform: rotate(360deg); } }
+@keyframes fdGiroInv  { to { transform: rotate(-360deg); } }
+@keyframes fdFlotaY   { 0%, 100% { transform: translateY(-5%); } 50% { transform: translateY(5%); } }
+@keyframes fdFlotaX   { 0%, 100% { transform: translateX(-6%); } 50% { transform: translateX(6%); } }
+@keyframes fdLatido   { 0%, 100% { transform: scale(1);    opacity: .5; }
+                        50%      { transform: scale(1.18); opacity: .9; } }
+@keyframes fdDestello { 0%, 100% { opacity: .2; } 50% { opacity: .85; } }
+@keyframes fdBarrido  { 0%   { transform: translateX(-70%) skewX(-12deg); }
+                        100% { transform: translateX(70%)  skewX(-12deg); } }
+@keyframes fdAscenso  { 0% { transform: translateY(25%); } 100% { transform: translateY(-25%); } }
+@keyframes fdMatiz    { to { filter: hue-rotate(360deg); } }
+@keyframes fdDeriva   { 0%, 100% { transform: translate3d(-3%, -2%, 0) scale(1.05); }
+                        50%      { transform: translate3d(3%, 2%, 0)  scale(1.12); } }
+
+/* ============================================================================
+   01 – 07 · Cielos y auroras
+   ========================================================================== */
+
+/* 01 · Aurora azul */
+.fondo--01 { background: linear-gradient(125deg, #061626, #0d3a5c, #1b6f8c, #071c33); background-size: 400% 400%; animation: fdPan 30s ease-in-out infinite; }
+.fondo--01::before { background: radial-gradient(55% 40% at 50% 5%, rgba(120, 230, 205, .38), transparent 70%); animation: fdFlotaY 16s ease-in-out infinite; }
+
+/* 02 · Nebulosa púrpura */
+.fondo--02 { background: radial-gradient(120% 110% at 25% 20%, #3b1a6b 0%, #1a0b33 55%, #08040f 100%); }
+.fondo--02::before { background: radial-gradient(38% 38% at 70% 70%, rgba(226, 120, 255, .35), transparent 70%); animation: fdDeriva 24s ease-in-out infinite; }
+.fondo--02::after { background: radial-gradient(30% 30% at 25% 65%, rgba(90, 140, 255, .3), transparent 70%); animation: fdDeriva 31s ease-in-out infinite reverse; }
+
+/* 03 · Amanecer */
+.fondo--03 { background: linear-gradient(180deg, #10203f 0%, #4b3070 40%, #b4603f 78%, #e79a52 100%); background-size: 100% 260%; animation: fdPanV 34s ease-in-out infinite; }
+.fondo--03::before { background: radial-gradient(35% 22% at 50% 92%, rgba(255, 210, 140, .55), transparent 70%); animation: fdLatido 12s ease-in-out infinite; }
+
+/* 04 · Atardecer de brasa */
+.fondo--04 { background: linear-gradient(200deg, #2a0b2e, #6d1f3e, #b8452f, #2a0b2e); background-size: 300% 300%; animation: fdPan 26s ease-in-out infinite; }
+.fondo--04::after { background: radial-gradient(45% 30% at 20% 85%, rgba(255, 160, 90, .35), transparent 70%); animation: fdFlotaX 19s ease-in-out infinite; }
+
+/* 05 · Cielo nocturno con nubes */
+.fondo--05 { background: linear-gradient(180deg, #050b1a, #10203c 60%, #1b3357); }
+.fondo--05::before { background: radial-gradient(50% 25% at 30% 40%, rgba(140, 170, 230, .22), transparent 70%), radial-gradient(40% 20% at 75% 60%, rgba(180, 200, 255, .16), transparent 70%); animation: fdFlotaX 40s ease-in-out infinite; }
+.fondo--05::after { background: radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent), radial-gradient(1.5px 1.5px at 70% 20%, #fff, transparent), radial-gradient(2px 2px at 45% 70%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 55%, #fff, transparent); animation: fdDestello 7s ease-in-out infinite; }
+
+/* 06 · Estrellas en calma */
+.fondo--06 { background: radial-gradient(140% 120% at 50% 100%, #14243f 0%, #060a14 70%); }
+.fondo--06::before { background-image: radial-gradient(1.6px 1.6px at 15% 25%, #fff, transparent), radial-gradient(1.6px 1.6px at 42% 12%, #cfe4ff, transparent), radial-gradient(2.2px 2.2px at 68% 38%, #fff, transparent), radial-gradient(1.4px 1.4px at 88% 18%, #fff, transparent), radial-gradient(1.8px 1.8px at 33% 72%, #e8f1ff, transparent), radial-gradient(1.4px 1.4px at 78% 80%, #fff, transparent); animation: fdDestello 5.5s ease-in-out infinite; }
+.fondo--06::after { background: radial-gradient(30% 30% at 60% 30%, rgba(90, 150, 255, .2), transparent 70%); animation: fdDeriva 45s ease-in-out infinite; }
+
+/* 07 · Vía láctea */
+.fondo--07 { background: linear-gradient(160deg, #05070f, #101a35 45%, #05070f); }
+.fondo--07::before { background: linear-gradient(115deg, transparent 38%, rgba(190, 205, 255, .22) 48%, rgba(255, 225, 200, .28) 52%, transparent 62%); animation: fdFlotaY 28s ease-in-out infinite; }
+.fondo--07::after { background-image: radial-gradient(1.4px 1.4px at 25% 55%, #fff, transparent), radial-gradient(1.8px 1.8px at 55% 45%, #fff, transparent), radial-gradient(1.4px 1.4px at 75% 62%, #fff, transparent); animation: fdDestello 6.5s ease-in-out infinite; }
+
+/* ============================================================================
+   08 – 14 · Luz, rayos y destellos
+   ========================================================================== */
+
+/* 08 · Rayos giratorios */
+.fondo--08 { background: radial-gradient(120% 120% at 50% 40%, #1c2c52, #070c18 75%); }
+.fondo--08::before { background: conic-gradient(from 0deg, transparent 0 8%, rgba(255, 255, 255, .11) 8% 10%, transparent 10% 18%, rgba(255, 255, 255, .09) 18% 20%, transparent 20% 100%); animation: fdGiro 70s linear infinite; }
+
+/* 09 · Corona de luz */
+.fondo--09 { background: radial-gradient(circle at 50% 45%, #34507f 0%, #16233f 40%, #070b16 80%); }
+.fondo--09::before { background: conic-gradient(from 90deg, rgba(255, 240, 200, .16), transparent 25%, rgba(255, 240, 200, .16) 50%, transparent 75%, rgba(255, 240, 200, .16)); animation: fdGiroInv 90s linear infinite; }
+.fondo--09::after { background: radial-gradient(22% 22% at 50% 45%, rgba(255, 238, 190, .4), transparent 70%); animation: fdLatido 9s ease-in-out infinite; }
+
+/* 10 · Barrido de luz */
+.fondo--10 { background: linear-gradient(150deg, #0a1830, #123055 55%, #0a1830); }
+.fondo--10::before { background: linear-gradient(100deg, transparent 40%, rgba(255, 255, 255, .16) 50%, transparent 60%); animation: fdBarrido 11s ease-in-out infinite; }
+
+/* 11 · Neón pulsante */
+.fondo--11 { background: #080a1c; }
+.fondo--11::before { background: radial-gradient(35% 35% at 28% 30%, rgba(255, 60, 160, .4), transparent 70%), radial-gradient(35% 35% at 72% 70%, rgba(60, 220, 255, .35), transparent 70%); animation: fdDeriva 18s ease-in-out infinite; }
+.fondo--11::after { background: radial-gradient(30% 30% at 50% 50%, rgba(140, 90, 255, .28), transparent 70%); animation: fdLatido 6s ease-in-out infinite; }
+
+/* 12 · Prisma */
+.fondo--12 { background: linear-gradient(90deg, #ff5f6d, #ffc371, #47e6b1, #4facfe, #9d6bff, #ff5f6d); background-size: 600% 100%; animation: fdPan 40s linear infinite; filter: saturate(.75) brightness(.55); }
+
+/* 13 · Bokeh dorado */
+.fondo--13 { background: radial-gradient(120% 120% at 30% 80%, #2a1c08, #0c0904 70%); }
+.fondo--13::before { background: radial-gradient(9% 9% at 20% 30%, rgba(255, 205, 120, .4), transparent 70%), radial-gradient(6% 6% at 62% 22%, rgba(255, 225, 160, .35), transparent 70%), radial-gradient(11% 11% at 78% 66%, rgba(255, 190, 100, .3), transparent 70%), radial-gradient(5% 5% at 40% 74%, rgba(255, 235, 180, .4), transparent 70%); animation: fdAscenso 26s ease-in-out infinite alternate; }
+.fondo--13::after { background: radial-gradient(7% 7% at 50% 50%, rgba(255, 215, 140, .3), transparent 70%), radial-gradient(4% 4% at 85% 35%, rgba(255, 240, 200, .35), transparent 70%); animation: fdAscenso 34s ease-in-out infinite alternate-reverse; }
+
+/* 14 · Lluvia de luz */
+.fondo--14 { background: linear-gradient(180deg, #071427, #0d2440 70%, #071427); }
+.fondo--14::before { background-image: repeating-linear-gradient(78deg, transparent 0 22px, rgba(190, 225, 255, .14) 22px 23px); animation: fdAscenso 9s linear infinite; }
+.fondo--14::after { background: radial-gradient(60% 40% at 50% 0%, rgba(160, 215, 255, .2), transparent 70%); animation: fdDestello 8s ease-in-out infinite; }
+
+/* ============================================================================
+   15 – 21 · Agua, humo y materia
+   ========================================================================== */
+
+/* 15 · Océano profundo */
+.fondo--15 { background: linear-gradient(180deg, #04263d, #04395c 45%, #021421); background-size: 100% 220%; animation: fdPanV 28s ease-in-out infinite; }
+.fondo--15::before { background: repeating-radial-gradient(60% 30% at 50% 110%, rgba(120, 220, 240, .12) 0 3%, transparent 3% 9%); animation: fdFlotaY 20s ease-in-out infinite; }
+
+/* 16 · Olas líquidas */
+.fondo--16 { background: linear-gradient(160deg, #072b3a, #0b4a5c 60%, #041c26); }
+.fondo--16::before { background: radial-gradient(70% 40% at 20% 90%, rgba(90, 230, 220, .25), transparent 70%); animation: fdFlotaX 17s ease-in-out infinite; }
+.fondo--16::after { background: radial-gradient(70% 40% at 80% 100%, rgba(60, 160, 220, .25), transparent 70%); animation: fdFlotaX 23s ease-in-out infinite reverse; }
+
+/* 17 · Humo de plasma */
+.fondo--17 { background: radial-gradient(120% 120% at 40% 60%, #2b1245, #0a0616 70%); }
+.fondo--17::before { background: radial-gradient(45% 45% at 35% 40%, rgba(120, 90, 255, .35), transparent 70%), radial-gradient(40% 40% at 70% 65%, rgba(255, 90, 170, .28), transparent 70%); filter: blur(12px); animation: fdDeriva 22s ease-in-out infinite; }
+.fondo--17::after { background: radial-gradient(35% 35% at 55% 30%, rgba(80, 200, 255, .22), transparent 70%); animation: fdMatiz 60s linear infinite; }
+
+/* 18 · Burbujas ascendentes */
+.fondo--18 { background: linear-gradient(180deg, #052033, #0a3550 70%, #041623); }
+.fondo--18::before { background: radial-gradient(4% 4% at 18% 90%, rgba(255, 255, 255, .28), transparent 70%), radial-gradient(2.5% 2.5% at 42% 95%, rgba(255, 255, 255, .24), transparent 70%), radial-gradient(5% 5% at 68% 88%, rgba(255, 255, 255, .2), transparent 70%), radial-gradient(3% 3% at 86% 96%, rgba(255, 255, 255, .26), transparent 70%); animation: fdAscenso 18s linear infinite; }
+.fondo--18::after { background: radial-gradient(3.5% 3.5% at 30% 92%, rgba(255, 255, 255, .22), transparent 70%), radial-gradient(2% 2% at 76% 94%, rgba(255, 255, 255, .3), transparent 70%); animation: fdAscenso 25s linear infinite; }
+
+/* 19 · Hielo */
+.fondo--19 { background: linear-gradient(155deg, #0d2b3a, #17546b 50%, #0a2130); }
+.fondo--19::before { background-image: repeating-linear-gradient(60deg, rgba(220, 250, 255, .08) 0 2px, transparent 2px 26px), repeating-linear-gradient(-60deg, rgba(220, 250, 255, .07) 0 2px, transparent 2px 26px); animation: fdDeriva 30s ease-in-out infinite; }
+
+/* 20 · Fuego suave */
+.fondo--20 { background: linear-gradient(0deg, #3a0d06, #7a230a 45%, #180503 100%); background-size: 100% 200%; animation: fdPanV 18s ease-in-out infinite; }
+.fondo--20::before { background: radial-gradient(40% 30% at 30% 100%, rgba(255, 160, 60, .45), transparent 70%), radial-gradient(35% 28% at 70% 100%, rgba(255, 110, 40, .4), transparent 70%); animation: fdLatido 5s ease-in-out infinite; }
+
+/* 21 · Arena dorada */
+.fondo--21 { background: linear-gradient(165deg, #2b2109, #5c4715 50%, #171104); background-size: 250% 250%; animation: fdPan 32s ease-in-out infinite; }
+.fondo--21::before { background-image: repeating-linear-gradient(100deg, rgba(255, 220, 150, .07) 0 1px, transparent 1px 14px); animation: fdFlotaX 26s ease-in-out infinite; }
+
+/* ============================================================================
+   22 – 28 · Geometría
+   ========================================================================== */
+
+/* 22 · Malla de puntos */
+.fondo--22 { background: radial-gradient(120% 120% at 50% 30%, #16233d, #070b14 75%); }
+.fondo--22::before { background-image: radial-gradient(rgba(150, 190, 255, .28) 1.4px, transparent 1.5px); background-size: 34px 34px; animation: fdDeriva 28s ease-in-out infinite; }
+
+/* 23 · Cuadrícula retro */
+.fondo--23 { background: linear-gradient(180deg, #14032b 0%, #2a0645 55%, #06010f 100%); }
+.fondo--23::before { background-image: linear-gradient(rgba(255, 80, 200, .22) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 80, 200, .22) 1px, transparent 1px); background-size: 60px 60px; transform: perspective(320px) rotateX(58deg); transform-origin: 50% 100%; animation: fdAscenso 14s linear infinite; }
+.fondo--23::after { background: radial-gradient(45% 30% at 50% 30%, rgba(255, 120, 200, .2), transparent 70%); animation: fdDestello 9s ease-in-out infinite; }
+
+/* 24 · Hexágonos */
+.fondo--24 { background: linear-gradient(150deg, #0b1f26, #123c46 55%, #08161b); }
+.fondo--24::before { background-image: repeating-linear-gradient(30deg, rgba(120, 230, 215, .09) 0 1px, transparent 1px 30px), repeating-linear-gradient(-30deg, rgba(120, 230, 215, .09) 0 1px, transparent 1px 30px), repeating-linear-gradient(90deg, rgba(120, 230, 215, .07) 0 1px, transparent 1px 30px); animation: fdFlotaY 24s ease-in-out infinite; }
+
+/* 25 · Diagonales en marcha */
+.fondo--25 { background: linear-gradient(135deg, #101a33, #24365e 60%, #0a1023); }
+.fondo--25::before { background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, .06) 0 12px, transparent 12px 30px); animation: fdBarrido 16s linear infinite; }
+
+/* 26 · Círculos concéntricos */
+.fondo--26 { background: repeating-radial-gradient(circle at 50% 50%, #0d2038 0 28px, #123055 28px 56px); background-size: 200% 200%; animation: fdPan 36s ease-in-out infinite; }
+.fondo--26::after { background: radial-gradient(45% 45% at 50% 50%, rgba(255, 255, 255, .12), transparent 70%); animation: fdLatido 11s ease-in-out infinite; }
+
+/* 27 · Espiral */
+.fondo--27 { background: radial-gradient(120% 120% at 50% 50%, #1b1440, #08061a 75%); }
+.fondo--27::before { background: conic-gradient(from 0deg, rgba(160, 140, 255, .2), transparent 18%, rgba(120, 200, 255, .18) 36%, transparent 54%, rgba(160, 140, 255, .2) 72%, transparent 90%); animation: fdGiro 55s linear infinite; }
+
+/* 28 · Vitral */
+.fondo--28 { background: conic-gradient(from 30deg at 50% 50%, #3a1350, #10305e, #0d4a4a, #5a2a10, #3a1350); background-size: 180% 180%; animation: fdPan 44s ease-in-out infinite; }
+.fondo--28::before { background-image: repeating-linear-gradient(60deg, rgba(0, 0, 0, .35) 0 3px, transparent 3px 70px), repeating-linear-gradient(-60deg, rgba(0, 0, 0, .35) 0 3px, transparent 3px 70px); }
+
+/* ============================================================================
+   29 – 35 · Texturas y color con vida
+   ========================================================================== */
+
+/* 29 · Terciopelo púrpura */
+.fondo--29 { background: radial-gradient(120% 100% at 50% 0%, #4a1f6b, #1b0a2c 65%, #0a0413); }
+.fondo--29::before { background: radial-gradient(40% 30% at 50% 10%, rgba(255, 200, 255, .16), transparent 70%); animation: fdLatido 14s ease-in-out infinite; }
+
+/* 30 · Esmeralda */
+.fondo--30 { background: linear-gradient(160deg, #04241c, #0a5540 55%, #031712); background-size: 250% 250%; animation: fdPan 30s ease-in-out infinite; }
+.fondo--30::after { background: radial-gradient(40% 30% at 70% 25%, rgba(130, 255, 205, .2), transparent 70%); animation: fdDeriva 27s ease-in-out infinite; }
+
+/* 31 · Zafiro */
+.fondo--31 { background: linear-gradient(140deg, #061033, #12266e 50%, #050b22); background-size: 240% 240%; animation: fdPan 27s ease-in-out infinite; }
+.fondo--31::before { background: radial-gradient(35% 28% at 25% 25%, rgba(120, 160, 255, .28), transparent 70%); animation: fdFlotaY 21s ease-in-out infinite; }
+
+/* 32 · Granate y oro */
+.fondo--32 { background: linear-gradient(200deg, #2c0512, #62111f 55%, #1a0309); }
+.fondo--32::before { background: radial-gradient(50% 35% at 50% 100%, rgba(220, 180, 90, .25), transparent 70%); animation: fdLatido 13s ease-in-out infinite; }
+
+/* 33 · Bosque en penumbra */
+.fondo--33 { background: linear-gradient(180deg, #05170f, #0d3220 55%, #030d08); }
+.fondo--33::before { background-image: repeating-linear-gradient(88deg, rgba(0, 0, 0, .35) 0 8px, transparent 8px 60px); animation: fdFlotaX 34s ease-in-out infinite; }
+.fondo--33::after { background: radial-gradient(45% 35% at 60% 10%, rgba(190, 255, 190, .16), transparent 70%); animation: fdDestello 12s ease-in-out infinite; }
+
+/* 34 · Papel antiguo */
+.fondo--34 { background: linear-gradient(150deg, #3a3120, #574a30 50%, #241d11); }
+.fondo--34::before { background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, .06) 0 2px, transparent 2px 5px), repeating-linear-gradient(90deg, rgba(255, 240, 200, .05) 0 2px, transparent 2px 6px); animation: fdDeriva 50s ease-in-out infinite; }
+
+/* 35 · Cruz de luz */
+.fondo--35 { background: radial-gradient(120% 120% at 50% 45%, #16294a, #060a15 75%); }
+.fondo--35::before { background: linear-gradient(90deg, transparent 47.6%, rgba(255, 240, 205, .22) 49%, rgba(255, 240, 205, .22) 51%, transparent 52.4%), linear-gradient(0deg, transparent 27%, rgba(255, 240, 205, .2) 29%, rgba(255, 240, 205, .2) 31%, transparent 33%); animation: fdDestello 10s ease-in-out infinite; }
+.fondo--35::after { background: radial-gradient(26% 26% at 50% 38%, rgba(255, 240, 205, .28), transparent 70%); animation: fdLatido 10s ease-in-out infinite; }

@@ -1,0 +1,467 @@
+/* ============================================================================
+   editor.css · Editor local del repertorio
+   ----------------------------------------------------------------------------
+   Es una herramienta de trabajo, no una portada: densidad alta, contraste alto
+   y cero adornos. Comparte paleta con el cancionero para que se note que son
+   la misma casa, pero aquí manda la cuadrícula.
+   ========================================================================== */
+
+:root {
+  --noche:       #0b1020;
+  --noche-2:     #121a2e;
+  --noche-3:     #1a2440;
+  --linea:       rgba(242, 237, 225, .10);
+  --hueso:       #f2ede1;
+  --hueso-tenue: rgba(242, 237, 225, .55);
+  --laton:       #c9a44c;
+  --laton-claro: #e8d29a;
+  --menta:       #7cb9a4;
+  --alerta:      #e08a6a;
+
+  --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --interfaz: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+  /* Medidas de la cuadrícula (las lee también el JavaScript). */
+  --w-num: 56px;
+  --w-titulo: 240px;
+  --w-diapo: 190px;
+  --w-tipo: 104px;
+  --alto-fila: 46px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--noche);
+  color: var(--hueso);
+  font-family: var(--interfaz);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body { display: flex; flex-direction: column; overflow: hidden; }
+
+:focus-visible { outline: 2px solid var(--laton-claro); outline-offset: 1px; }
+
+/* ------------------------------------------------------------ Cabecera -- */
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--linea);
+  background: var(--noche-2);
+}
+
+.cabecera__titulo {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 400;
+  margin: 0;
+  white-space: nowrap;
+}
+.cabecera__titulo small {
+  display: block;
+  font-family: var(--interfaz);
+  font-size: .68rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--laton);
+}
+
+.separador { flex: 1; }
+
+/* -------------------------------------------------------------- Botones -- */
+.boton {
+  font: inherit;
+  font-size: .85rem;
+  color: var(--hueso);
+  background: var(--noche-3);
+  border: 1px solid var(--linea);
+  border-radius: 7px;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s;
+}
+.boton:hover { background: #24304f; border-color: rgba(242, 237, 225, .25); }
+.boton--principal {
+  background: var(--laton-claro);
+  border-color: var(--laton-claro);
+  color: #14100a;
+  font-weight: 600;
+}
+.boton--principal:hover { background: #f2e0b4; }
+.boton--sutil { background: transparent; }
+.boton--peligro { color: var(--alerta); }
+
+.campo {
+  font: inherit;
+  font-size: .85rem;
+  color: var(--hueso);
+  background: var(--noche);
+  border: 1px solid var(--linea);
+  border-radius: 7px;
+  padding: 8px 12px;
+}
+.campo:focus { border-color: rgba(201, 164, 76, .6); }
+
+.interruptor {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: .8rem;
+  color: var(--hueso-tenue);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ----------------------------------------------------------- Avisos ----- */
+.aviso {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  font-size: .85rem;
+  background: rgba(201, 164, 76, .12);
+  border-bottom: 1px solid rgba(201, 164, 76, .3);
+}
+.aviso[data-visible="true"] { display: flex; }
+.aviso--error { background: rgba(224, 138, 106, .14); border-bottom-color: rgba(224, 138, 106, .4); }
+
+.estado {
+  font-size: .78rem;
+  color: var(--hueso-tenue);
+  font-variant-numeric: tabular-nums;
+}
+.estado strong { color: var(--laton-claro); font-weight: 600; }
+
+/* =========================================================== Cuadrícula == */
+.rejilla {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+  scrollbar-color: #33405f var(--noche);
+}
+
+/* Fila 1 del documento: la cabecera. Se queda pegada arriba. */
+.rejilla__cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: var(--plantilla-cols);
+  width: max-content;
+  min-width: 100%;
+  background: var(--noche-3);
+  border-bottom: 2px solid rgba(201, 164, 76, .45);
+}
+
+.celda-cabecera {
+  padding: 9px 10px;
+  font-size: .74rem;
+  letter-spacing: .04em;
+  color: var(--hueso-tenue);
+  border-right: 1px solid var(--linea);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.celda-cabecera b {
+  color: var(--laton);
+  font-family: var(--mono);
+  font-weight: 700;
+  margin-right: 6px;
+}
+.celda-cabecera--fija {
+  position: sticky;
+  z-index: 4;
+  background: var(--noche-3);
+}
+
+/* Cuerpo virtualizado: solo existen en el DOM las filas visibles. */
+.rejilla__cuerpo {
+  position: relative;
+  width: max-content;
+  min-width: 100%;
+}
+
+.fila {
+  position: absolute;
+  left: 0;
+  display: grid;
+  grid-template-columns: var(--plantilla-cols);
+  height: var(--alto-fila);
+  width: max-content;
+  min-width: 100%;
+  border-bottom: 1px solid var(--linea);
+}
+/* El rayado va por número de fila, no por posición en el DOM: las filas se
+   crean y destruyen al desplazarse, así que nth-child daría un patrón loco. */
+.fila[data-par="true"] { background: rgba(255, 255, 255, .018); }
+.fila[data-con-contenido="true"] .celda-num { color: var(--laton); }
+.fila[data-resaltada="true"] { background: rgba(201, 164, 76, .14); }
+
+.celda {
+  border-right: 1px solid var(--linea);
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* Las dos primeras columnas se quedan a la vista al desplazarse en horizontal. */
+.celda--fija { position: sticky; z-index: 2; background: var(--noche); }
+.fila[data-par="true"] .celda--fija { background: #0d1324; }
+
+/* Un único sitio donde se decide dónde se pega cada columna fija.
+   Lo usan tanto la cabecera como las filas, así que nunca se descuadran. */
+.pegada-0 { left: 0; }
+.pegada-1 { left: var(--w-num); }
+
+.celda-num {
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px 0 9px;
+  font-family: var(--mono);
+  font-size: .74rem;
+  color: rgba(242, 237, 225, .35);
+}
+
+.abrir-fila {
+  font: inherit;
+  font-size: .9rem;
+  line-height: 1;
+  color: var(--hueso-tenue);
+  background: none;
+  border: 0;
+  padding: 4px 5px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.abrir-fila:hover { color: var(--laton-claro); background: rgba(255, 255, 255, .07); }
+
+/* Campos de la cuadrícula: sin bordes propios, la rejilla ya los dibuja. */
+.entrada, .entrada-multilinea {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--hueso);
+  font: inherit;
+  padding: 6px 9px;
+  resize: none;
+}
+.entrada:focus, .entrada-multilinea:focus {
+  outline: 0;
+  background: rgba(201, 164, 76, .12);
+  box-shadow: inset 0 0 0 1px rgba(201, 164, 76, .6);
+}
+.entrada-multilinea {
+  font-size: .8rem;
+  line-height: 1.35;
+  white-space: pre;
+  overflow: hidden;
+}
+.entrada-multilinea:focus { overflow: auto; }
+
+.entrada--titulo { font-family: var(--display); font-size: .95rem; }
+
+.celda-tipo {
+  align-items: center;
+  justify-content: center;
+  font-size: .72rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--hueso-tenue);
+}
+.celda-tipo[data-tipo="1"] { color: var(--laton); }
+.celda-tipo[data-tipo="2"] { color: var(--menta); }
+.celda-tipo select {
+  font: inherit;
+  font-size: .78rem;
+  color: inherit;
+  background: var(--noche-3);
+  border: 1px solid var(--linea);
+  border-radius: 5px;
+  padding: 3px 5px;
+}
+
+/* ================================================================ Cajón == */
+.cajon {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(720px, 100%);
+  z-index: 20;
+  background: var(--noche-2);
+  border-left: 1px solid var(--linea);
+  box-shadow: -24px 0 60px rgba(0, 0, 0, .5);
+  transform: translateX(100%);
+  transition: transform .22s ease;
+  display: flex;
+  flex-direction: column;
+}
+.cajon[data-abierto="true"] { transform: none; }
+
+.cajon__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--linea);
+}
+.cajon__titulo { font-family: var(--display); font-size: 1.05rem; margin: 0; }
+.cajon__cuerpo { flex: 1; overflow: auto; padding: 18px; }
+.cajon__pie {
+  display: flex;
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--linea);
+}
+
+.bloque-diapo { margin-bottom: 14px; }
+.bloque-diapo label {
+  display: block;
+  font-size: .72rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--laton);
+  margin-bottom: 5px;
+}
+.bloque-diapo textarea {
+  width: 100%;
+  min-height: 72px;
+  font: inherit;
+  line-height: 1.45;
+  color: var(--hueso);
+  background: var(--noche);
+  border: 1px solid var(--linea);
+  border-radius: 7px;
+  padding: 9px 11px;
+  resize: vertical;
+}
+.bloque-diapo textarea:focus { border-color: rgba(201, 164, 76, .6); }
+
+.fondo-cajon {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  background: rgba(4, 6, 12, .6);
+  display: none;
+}
+.fondo-cajon[data-visible="true"] { display: block; }
+
+/* ============================================================== Diálogo == */
+.dialogo {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: none;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 6, 12, .72);
+}
+.dialogo[data-abierto="true"] { display: grid; }
+
+.dialogo__caja {
+  width: min(760px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--noche-2);
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  padding: 22px;
+}
+.dialogo__titulo { font-family: var(--display); font-size: 1.25rem; margin: 0 0 6px; }
+.dialogo__ayuda { color: var(--hueso-tenue); margin: 0 0 16px; line-height: 1.55; }
+
+.dialogo textarea {
+  width: 100%;
+  min-height: 220px;
+  font-family: var(--mono);
+  font-size: .82rem;
+  line-height: 1.5;
+  color: var(--hueso);
+  background: var(--noche);
+  border: 1px solid var(--linea);
+  border-radius: 8px;
+  padding: 12px;
+  resize: vertical;
+}
+
+.opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin: 14px 0;
+  font-size: .85rem;
+  color: var(--hueso-tenue);
+}
+.opciones label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+
+.previsualizacion {
+  margin: 12px 0 0;
+  font-size: .82rem;
+  color: var(--laton-claro);
+  font-variant-numeric: tabular-nums;
+}
+.previsualizacion[data-error="true"] { color: var(--alerta); }
+
+.acciones-dialogo { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+/* --- Instrucciones del extractor ---------------------------------------- */
+.pasos {
+  margin: 0 0 16px;
+  padding-left: 22px;
+  font-size: .87rem;
+  line-height: 1.75;
+  color: var(--hueso-tenue);
+}
+.pasos::marker, .pasos li::marker { color: var(--laton); }
+.pasos strong { color: var(--hueso); font-weight: 600; }
+.pasos code, .dialogo__ayuda code {
+  font-family: var(--mono);
+  font-size: .85em;
+  background: var(--noche);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--laton-claro);
+}
+
+.codigo {
+  max-height: 260px;
+  overflow: auto;
+  margin: 0;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: .74rem;
+  line-height: 1.5;
+  color: var(--hueso);
+  background: var(--noche);
+  border: 1px solid var(--linea);
+  border-radius: 8px;
+  white-space: pre;
+  -moz-tab-size: 2;
+  tab-size: 2;
+  user-select: all;                        /* un clic selecciona todo el bloque */
+}
+
+/* ============================================================= Informe === */
+.informe { list-style: none; margin: 0; padding: 0; font-size: .85rem; line-height: 1.7; }
+.informe li { padding-left: 20px; position: relative; }
+.informe li::before { content: "·"; position: absolute; left: 6px; color: var(--laton); }
+.informe li[data-nivel="error"]::before { content: "!"; color: var(--alerta); }
+
+/* ============================================================== Ayuda ==== */
+kbd {
+  font-family: var(--mono);
+  font-size: .78em;
+  background: var(--noche-3);
+  border: 1px solid var(--linea);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
