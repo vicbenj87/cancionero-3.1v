@@ -11,8 +11,9 @@ import {
   hashCode,
 } from "@/lib/sessions";
 
-export const dynamic = "force-dynamic";
 
+export const dynamic = "force-dynamic";
+export const runtime = 'nodejs';
 function withOwnerCookie(res: NextResponse, token: string) {
   res.cookies.set(OWNER_COOKIE, token, {
     httpOnly: true,

@@ -5,6 +5,7 @@ import { weeklyQuickSongs } from "@/db/schema";
 import { semanaIsoActual } from "@/lib/sessions";
 
 export const dynamic = "force-dynamic";
+export const runtime = 'nodejs';
 
 /**
  * GET → lista de acceso rápido de la semana en curso (hasta 10 canciones).
